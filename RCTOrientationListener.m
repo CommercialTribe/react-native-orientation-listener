@@ -30,29 +30,37 @@
 {
 
     UIDevice *currentDevice = [UIDevice currentDevice];
-    UIDeviceOrientation orientation = [currentDevice orientation];
-
-    NSString *orientationStr;
-    switch (orientation) {
-        case UIDeviceOrientationPortrait:
-            orientationStr = @"PORTRAIT";
-            break;
-        case UIDeviceOrientationPortraitUpsideDown:
-            orientationStr = @"PORTRAITUPSIDEDOWN";
-            break;
-        case UIDeviceOrientationLandscapeLeft:
-        case UIDeviceOrientationLandscapeRight:
-            orientationStr = @"LANDSCAPE";
-            break;
-        default:
-            orientationStr = @"UNKNOWN";
-            break;
-    }
-
     NSString *deviceStr = [currentDevice model];
 
-    [_bridge.eventDispatcher sendDeviceEventWithName:@"orientationDidChange"
-                                                body:@{@"orientation": orientationStr,@"device": deviceStr}];
+    // Add this "timeout" inside deviceOrientationDidChange, because the interface orientation isn't updated yet
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 0.1f * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+        UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+        NSString *orientationStr = [self getOrientationStr:orientation];
+        [_bridge.eventDispatcher sendDeviceEventWithName:@"orientationDidChange"
+                                                    body:@{@"orientation": orientationStr,@"device": deviceStr}];
+    });
+}
+
+- (NSString *)getOrientationStr: (UIInterfaceOrientation)orientation {
+  NSString *orientationStr;
+
+  switch (orientation) {
+    case UIInterfaceOrientationPortrait:
+      orientationStr = @"PORTRAIT";
+      break;
+    case UIInterfaceOrientationPortraitUpsideDown:
+      orientationStr = @"PORTRAITUPSIDEDOWN";
+      break;
+    case UIInterfaceOrientationLandscapeLeft:
+    case UIInterfaceOrientationLandscapeRight:
+      orientationStr = @"LANDSCAPE";
+      break;
+    default:
+      orientationStr = @"UNKNOWN";
+      break;
+  }
+
+  return orientationStr;
 }
 
 RCT_EXPORT_MODULE();
@@ -61,27 +69,10 @@ RCT_EXPORT_METHOD(getOrientation:(RCTResponseSenderBlock)callback)
 {
 
     UIDevice *currentDevice = [UIDevice currentDevice];
-    UIDeviceOrientation orientation = [currentDevice orientation];
-
-    NSString *orientationStr;
-    switch (orientation) {
-        case UIDeviceOrientationPortrait:
-            orientationStr = @"PORTRAIT";
-            break;
-        case UIDeviceOrientationPortraitUpsideDown:
-            orientationStr = @"PORTRAITUPSIDEDOWN";
-            break;
-        case UIDeviceOrientationLandscapeLeft:
-        case UIDeviceOrientationLandscapeRight:
-
-            orientationStr = @"LANDSCAPE";
-            break;
-        default:
-            orientationStr = @"UNKNOWN";
-            break;
-    }
-
     NSString *deviceStr = [currentDevice model];
+
+    UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
+    NSString *orientationStr = [self getOrientationStr:orientation];
 
     NSArray *orientationArray = @[orientationStr, deviceStr];
     callback(orientationArray);
