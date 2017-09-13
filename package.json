@@ -14,7 +14,8 @@
   },
   "author": "Ken Wheeler",
   "license": "MIT",
-  "peerDependencies": {
-    "react-native": ">=0.5"
+  "devDependencies": {
+    "react": "15.4.2",
+    "react-native": "0.42.3"
   }
 }
